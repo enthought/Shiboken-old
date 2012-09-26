@@ -208,7 +208,7 @@ void SbkDeallocWrapper(PyObject* pyObj)
     SbkObject* sbkObj = reinterpret_cast<SbkObject*>(pyObj);
 
     // Check that Python is still initialized as sometimes this is called by a static destructor
-    // after Python interpeter is shutdown. 
+    // after Python interpeter is shutdown.
     if (sbkObj->weakreflist && Py_IsInitialized())
         PyObject_ClearWeakRefs(pyObj);
 
@@ -236,7 +236,7 @@ void SbkDeallocWrapperWithPrivateDtor(PyObject* self)
 {
     SbkObject* sbkObj = reinterpret_cast<SbkObject*>(self);
     // Check that Python is still initialized as sometimes this is called by a static destructor
-    // after Python interpeter is shutdown. 
+    // after Python interpeter is shutdown.
     if (sbkObj->weakreflist && Py_IsInitialized())
         PyObject_ClearWeakRefs(self);
 
@@ -746,6 +746,12 @@ bool checkType(PyObject* pyObj)
 bool isUserType(PyObject* pyObj)
 {
     return ObjectType::isUserType(pyObj->ob_type);
+}
+
+Py_hash_t hash(PyObject* pyObj)
+{
+    assert(Shiboken::Object::checkType(pyObj));
+    return reinterpret_cast<Py_hash_t>(pyObj);
 }
 
 static void setSequenceOwnership(PyObject* pyObj, bool owner)
@@ -1315,16 +1321,21 @@ std::string info(SbkObject* self)
     std::ostringstream s;
     std::list<SbkObjectType*> bases;
 
-    if (ObjectType::isUserType(Py_TYPE(self)))
-        bases = getCppBaseClasses(Py_TYPE(self));
-    else
-        bases.push_back(reinterpret_cast<SbkObjectType*>(Py_TYPE(self)));
+    if (self->d && self->d->cptr) {
+        if (ObjectType::isUserType(Py_TYPE(self)))
+            bases = getCppBaseClasses(Py_TYPE(self));
+        else
+            bases.push_back(reinterpret_cast<SbkObjectType*>(Py_TYPE(self)));
 
-    s << "C++ address....... ";
-    std::list<SbkObjectType*>::const_iterator it = bases.begin();
-    for (int i = 0; it != bases.end(); ++it, ++i)
-        s << ((PyTypeObject*)*it)->tp_name << "/" << self->d->cptr[i] << ' ';
-    s << "\n";
+        s << "C++ address....... ";
+        std::list<SbkObjectType*>::const_iterator it = bases.begin();
+        for (int i = 0; it != bases.end(); ++it, ++i)
+            s << ((PyTypeObject*)*it)->tp_name << "/" << self->d->cptr[i] << ' ';
+        s << "\n";
+    }
+    else {
+        s << "C++ address....... <<Deleted>>\n";
+    }
 
     s << "hasOwnership...... " << bool(self->d->hasOwnership) << "\n"
          "containsCppWrapper " << self->d->containsCppWrapper << "\n"

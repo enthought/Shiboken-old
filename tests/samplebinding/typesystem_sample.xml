@@ -530,8 +530,10 @@
                 <object-type name="OkThisIsRecursiveEnough">
                     <enum-type name="NiceEnum" />
                 </object-type>
+                <enum-type name="ProtectedEnum"/>
             </value-type>
             <value-type name="SomeOtherInnerClass"/>
+            <enum-type name="ProtectedEnum"/>
         </value-type>
 
         <modify-function signature="doSomethingWithArray(const unsigned char*, unsigned int, const char*)">
@@ -727,6 +729,10 @@
           </modify-argument>
         </modify-function>
     </object-type>
+
+    <object-type name="OtherBase" />
+    <object-type name="ObjectTypeDerived" />
+
     <object-type name="ObjectTypeLayout">
         <modify-function signature="create()">
             <modify-argument index="return">
